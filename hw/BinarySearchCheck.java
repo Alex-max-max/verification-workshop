@@ -22,9 +22,11 @@ public class BinarySearchCheck {
         }
     }
 
-    // TODO (7): the contract of midpoint, as a harness
+    // Check the index bounds directly, without constructing an array.
     //   ./bmc BinarySearchCheck.midpoint --unwind 1
     public static void midpoint(int lo, int hi) {
-        assert false;   // remove this line
+        CProver.assume(0 <= lo && lo <= hi);
+        int mid = BinarySearch.midpoint(lo, hi);
+        assert lo <= mid && mid <= hi;
     }
 }
