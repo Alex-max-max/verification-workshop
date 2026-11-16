@@ -41,9 +41,18 @@ public class SafeLockCheck {
         }
     }
 
-    // TODO (5): Property 2: a BLOCKED safe only leaves BLOCKED through an
+    // Property 2: a BLOCKED safe only leaves BLOCKED through an
     // AdminReset with the right code.
     public static void onlyAdminUnblocks(int pin, int adminCode) {
-        assert false;   // remove this line
+        CProver.assume(pin != adminCode);
+        SafeLock safe = new SafeLock(pin, adminCode);
+        while (CProver.nondetBoolean()) {
+            SafeLock.State before = safe.state();
+            SafeLock.Event e = anyEvent();
+            safe.handle(e);
+            if (before == SafeLock.State.BLOCKED && safe.state() != before) {
+                assert e instanceof SafeLock.AdminReset r && r.code() == adminCode;
+            }
+        }
     }
 }

@@ -16,8 +16,18 @@ public class CompositeCheck {
         while (CProver.nondetBoolean()) {
             Composite p = nodes[anyIndex()];
             Composite c = nodes[anyIndex()];
-            CProver.assume(c != p && c.parent == null && c.firstChild == null);   // addChild's precondition
-            p.addChild(c);
+            CProver.assume(c != p && c.parent == null);
+            // A root in our own ancestry is not an admissible subtree.
+            boolean cycle = false;
+            for (Composite ancestor = p; ancestor != null; ancestor = ancestor.parent) {
+                cycle |= ancestor == c;
+            }
+            try {
+                p.addChild(c);
+                assert !cycle;
+            } catch (IllegalArgumentException ex) {
+                assert cycle;
+            }
             for (Composite n : nodes) {
                 checkInvariant(n);
             }
@@ -32,11 +42,18 @@ public class CompositeCheck {
 
     // The class invariant of Composite, from the comments on its fields.
     static void checkInvariant(Composite n) {
+        int maximum = n.initValue;
+        boolean found = false;
         for (Composite c = n.firstChild; c != null; c = c.nextSibling) {
+            maximum = Math.max(maximum, c.value);
+            found |= c == n.maxChild;
             assert c.parent == n;                  // each child points back to its parent
         }
-        // TODO (1): value is the maximum of initValue and the children's values;
-        // maxChild is null exactly when value == initValue, and otherwise it is
-        // one of the children and its value is value.
+        assert n.value == maximum;
+        assert n.value == n.initValue ? n.maxChild == null : found && n.maxChild.value == n.value;
+        // A finite tree has at most NODES ancestors including this node.
+        Composite ancestor = n;
+        for (int k = 0; k < NODES && ancestor != null; k++) ancestor = ancestor.parent;
+        assert ancestor == null;
     }
 }

@@ -31,13 +31,16 @@ public final class Composite {
         value = v;
     }
 
-    /** Adds c as a child: c must be a single node (no parent, no children) other than this. */
+    /** Adds c as a child: c must be a root in a different tree. */
     public void addChild(Composite c) {
         if (c == null) {
             throw new IllegalArgumentException();
         }
-        if (c == this || c.parent != null || c.firstChild != null) {
+        if (c == this || c.parent != null) {
             throw new IllegalArgumentException();
+        }
+        for (Composite ancestor = this; ancestor != null; ancestor = ancestor.parent) {
+            if (ancestor == c) throw new IllegalArgumentException();
         }
         c.parent = this;
         c.nextSibling = firstChild;
@@ -51,7 +54,7 @@ public final class Composite {
             value = c.value;
             maxChild = c;
             if (parent != null) {
-                parent.update(c);
+                parent.update(this);
             }
         }
     }
